@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Feedback</title>
+</head>
+<body>
+    <h1>Provide Feedback</h1>
+    <form method="POST" action="/feedback">
+        <input type="hidden" name="prob_normal" value="{{ prob_normal }}">
+        <input type="hidden" name="prob_abnormal" value="{{ prob_abnormal }}">
+        <label>Comments:</label><br>
+        <textarea name="comments" rows="4" cols="50"></textarea><br>
+        <label>Rating (1-5):</label>
+        <select name="rating">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+        </select><br>
+        <button type="submit">Submit and Download PDF</button>
+    </form>
+</body>
+</html>

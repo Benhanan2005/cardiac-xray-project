@@ -1,0 +1,45 @@
+<body>
+
+<div class="container">
+
+{% if 'High Risk' in result %}
+    <h2 style="color:red;">🚨 HIGH RISK DETECTED 🚨</h2>
+
+    <a href="tel:108"><button>📞 Call Emergency</button></a>
+
+    <a href="https://www.google.com/maps/search/hospital+near+me">
+        <button>🏥 Nearby Hospitals</button>
+    </a>
+
+{% else %}
+    <h2>{{ result }}</h2>
+{% endif %}
+
+<h3>{{ name }} | {{ age }} | {{ gender }}</h3>
+
+<img src="{{ image_path }}">
+
+{% if doctors %}
+<h3>Doctors</h3>
+{% for doc in doctors %}
+    <p>{{ doc.name }} - {{ doc.hospital }}</p>
+{% endfor %}
+{% endif %}
+
+</div>
+
+</body>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Analysis Results</title>
+</head>
+<body>
+    <h1>X-Ray Analysis Results</h1>
+    <p>Normal Probability: {{ prob_normal }}%</p>
+    <p>Abnormal Probability: {{ prob_abnormal }}%</p>
+    <img src="data:image/png;base64,{{ graph_data }}" alt="Prediction Graph">
+    <br>
+    <a href="/feedback?prob_normal={{ prob_normal }}&prob_abnormal={{ prob_abnormal }}">Provide Feedback</a>
+</body>
+</html>
