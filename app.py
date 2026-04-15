@@ -15,6 +15,64 @@ CORS(app)
 @app.route("/")
 def home():
     return '''
+    <html>
+    <head>
+        <title>Cardiac X-ray Detection</title>
+        <style>
+            body {
+                font-family: Arial;
+                background: linear-gradient(to right, #4facfe, #00f2fe);
+                text-align: center;
+                padding-top: 100px;
+            }
+
+            .container {
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                width: 400px;
+                margin: auto;
+                box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+            }
+
+            h2 {
+                color: #333;
+            }
+
+            input[type="file"] {
+                margin: 20px 0;
+            }
+
+            button {
+                background: #4facfe;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+
+            button:hover {
+                background: #00c6ff;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="container">
+            <h2>Cardiac X-ray Detection</h2>
+
+            <form action="/predict" method="post" enctype="multipart/form-data">
+                <input type="file" name="file" required>
+                <br>
+                <button type="submit">Upload & Predict</button>
+            </form>
+        </div>
+    </body>
+    </html>
+    '''
+    return '''
     <h2>Cardiac X-ray Detection</h2>
     <form action="/predict" method="post" enctype="multipart/form-data">
         <input type="file" name="file" required>
@@ -58,6 +116,29 @@ def predict():
 
     # ✅ SHOW RESULT AS PAGE (NOT JSON)
     return f"""
+<html>
+<head>
+<style>
+body {{
+    font-family: Arial;
+    background: linear-gradient(to right, #43e97b, #38f9d7);
+    text-align: center;
+    padding-top: 50px;
+}}
+
+.box {{
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    width: 400px;
+    margin: auto;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+}}
+</style>
+</head>
+
+<body>
+<div class="box">
     <h2>Result</h2>
     <p><b>Prediction:</b> {result}</p>
     <p><b>Confidence:</b> {confidence}%</p>
@@ -67,9 +148,12 @@ def predict():
     {''.join([f"<li>{d['name']} - {d['hospital']} ({d['phone']})</li>" for d in doctors])}
     </ul>
 
-    <br><br>
+    <br>
     <a href="/">Go Back</a>
-    """
+</div>
+</body>
+</html>
+"""
 
 # ✅ DOWNLOAD REPORT
 @app.route('/download-report', methods=['POST'])
