@@ -1,26 +1,28 @@
-
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import numpy as np
 import cv2
 import os
+import random
+from fpdf import FPDF
+import io
 
 app = Flask(__name__)
 CORS(app)
 
-# Load model
-import random
+# ✅ HOME ROUTE (fixes Not Found)
+@app.route("/")
+def home():
+    return "App is running 🚀"
 
-prediction = random.choice(["Normal", "Abnormal"])
-confidence = random.randint(80, 95)
-
+# ✅ PREDICT ROUTE
 @app.route('/predict', methods=['POST'])
 def predict():
-    print("HELLO") 
     file = request.files['file']
 
-    filepath = os.path.join("uploads", file.filename)
+    # Save file
     os.makedirs("uploads", exist_ok=True)
+    filepath = os.path.join("uploads", file.filename)
     file.save(filepath)
 
     # Image processing
@@ -29,21 +31,20 @@ def predict():
     img = img / 255.0
     img = np.reshape(img, (1, 224, 224, 3))
 
-    # Prediction
-    prediction = model.predict(img)[0][0]
+    # ✅ Dummy prediction (no model)
+    prediction_value = random.random()
 
-    if prediction > 0.5:
+    if prediction_value > 0.5:
         result = "Abnormal 🔴"
-        confidence = round(prediction * 100, 2)
+        confidence = round(prediction_value * 100, 2)
 
         doctors = [
             {"name": "Dr. Ravi Kumar", "hospital": "City Hospital", "phone": "9876543210"},
             {"name": "Dr. Anjali Sharma", "hospital": "Heart Care Clinic", "phone": "9123456789"}
         ]
-
     else:
         result = "Normal 🟢"
-        confidence = round((1 - prediction) * 100, 2)
+        confidence = round((1 - prediction_value) * 100, 2)
         doctors = []
 
     return jsonify({
@@ -52,14 +53,7 @@ def predict():
         "doctors": doctors
     })
 
-
-if __name__ == '__main__':
-    app.run(debug=True,host="0.0.0.0", port=5050)
-
-    from flask import send_file
-from fpdf import FPDF
-import io
-
+# ✅ DOWNLOAD REPORT
 @app.route('/download-report', methods=['POST'])
 def download_report():
     data = request.json
@@ -77,11 +71,7 @@ def download_report():
     buffer.seek(0)
 
     return send_file(buffer, as_attachment=True, download_name="report.pdf")
-from flask import Flask, request, jsonify
-from flask_cors import CORS
 
-app = Flask(__name__)
-CORS(app)   # ✅ THIS IS IMPORTANT
-@app.route("/")
-def home():
-    return "App is running 🚀"
+# ✅ RUN APP
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=5050)
