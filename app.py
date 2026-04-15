@@ -116,6 +116,8 @@ def predict():
 
     # ✅ SHOW RESULT AS PAGE (NOT JSON)
     return f"""
+    <h3>Uploaded Image:</h3>
+<img src="/uploads/{file.filename}" width="200">
 <html>
 <head>
 <style>
@@ -177,3 +179,8 @@ def download_report():
 # ✅ RUN APP
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5050)
+    from flask import send_from_directory
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory('uploads', filename)
