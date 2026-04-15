@@ -13,7 +13,14 @@ CORS(app)
 # ✅ HOME ROUTE (fixes Not Found)
 @app.route("/")
 def home():
-    return "App is running 🚀"
+    return '''
+    <h2>Cardiac X-ray Detection</h2>
+    <form action="/predict" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <br><br>
+        <button type="submit">Upload & Predict</button>
+    </form>
+    '''
 
 # ✅ PREDICT ROUTE
 @app.route('/predict', methods=['POST'])
