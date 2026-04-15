@@ -54,11 +54,19 @@ def predict():
         confidence = round((1 - prediction_value) * 100, 2)
         doctors = []
 
-    return jsonify({
-        "prediction": result,
-        "confidence": confidence,
-        "doctors": doctors
-    })
+    return f"""
+<h2>Result</h2>
+<p>Prediction: {result}</p>
+<p>Confidence: {confidence}%</p>
+
+<h3>Doctors:</h3>
+<ul>
+{''.join([f"<li>{d['name']} - {d['hospital']} ({d['phone']})</li>" for d in doctors])}
+</ul>
+
+<br>
+<a href="/">Go Back</a>
+"""
 
 # ✅ DOWNLOAD REPORT
 @app.route('/download-report', methods=['POST'])
