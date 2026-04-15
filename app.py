@@ -1,16 +1,17 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request
 from flask_cors import CORS
 import numpy as np
 import cv2
 import os
 import random
 from fpdf import FPDF
+from flask import send_file
 import io
 
 app = Flask(__name__)
 CORS(app)
 
-# ✅ HOME ROUTE (fixes Not Found)
+# ✅ HOME PAGE (UPLOAD UI)
 @app.route("/")
 def home():
     return '''
@@ -23,13 +24,15 @@ def home():
     '''
 
 # ✅ PREDICT ROUTE
-@app.route('/predict', methods=['POST'])
+@app.route('/predict', methods=['GET', 'POST'])
 def predict():
+    if request.method == 'GET':
+        return "Please upload image from home page"
+
     file = request.files['file']
 
-    # Save file
-    os.makedirs("uploads", exist_ok=True)
     filepath = os.path.join("uploads", file.filename)
+    os.makedirs("uploads", exist_ok=True)
     file.save(filepath)
 
     # Image processing
@@ -38,35 +41,35 @@ def predict():
     img = img / 255.0
     img = np.reshape(img, (1, 224, 224, 3))
 
-    # ✅ Dummy prediction (no model)
-    prediction_value = random.random()
+    # Dummy prediction (no model)
+    prediction = random.random()
 
-    if prediction_value > 0.5:
+    if prediction > 0.5:
         result = "Abnormal 🔴"
-        confidence = round(prediction_value * 100, 2)
-
+        confidence = round(prediction * 100, 2)
         doctors = [
             {"name": "Dr. Ravi Kumar", "hospital": "City Hospital", "phone": "9876543210"},
             {"name": "Dr. Anjali Sharma", "hospital": "Heart Care Clinic", "phone": "9123456789"}
         ]
     else:
         result = "Normal 🟢"
-        confidence = round((1 - prediction_value) * 100, 2)
+        confidence = round((1 - prediction) * 100, 2)
         doctors = []
 
+    # ✅ SHOW RESULT AS PAGE (NOT JSON)
     return f"""
-<h2>Result</h2>
-<p>Prediction: {result}</p>
-<p>Confidence: {confidence}%</p>
+    <h2>Result</h2>
+    <p><b>Prediction:</b> {result}</p>
+    <p><b>Confidence:</b> {confidence}%</p>
 
-<h3>Doctors:</h3>
-<ul>
-{''.join([f"<li>{d['name']} - {d['hospital']} ({d['phone']})</li>" for d in doctors])}
-</ul>
+    <h3>Doctors:</h3>
+    <ul>
+    {''.join([f"<li>{d['name']} - {d['hospital']} ({d['phone']})</li>" for d in doctors])}
+    </ul>
 
-<br>
-<a href="/">Go Back</a>
-"""
+    <br><br>
+    <a href="/">Go Back</a>
+    """
 
 # ✅ DOWNLOAD REPORT
 @app.route('/download-report', methods=['POST'])
