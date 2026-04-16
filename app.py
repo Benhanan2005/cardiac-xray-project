@@ -164,38 +164,25 @@ def predict():
 # ✅ PDF Download
 @app.route('/download-report', methods=['POST'])
 def download_report():
-    prediction = request.form['prediction']
-    confidence = request.form['confidence']
+    try:
+        prediction = request.form.get('prediction', 'Unknown')
+        confidence = request.form.get('confidence', '0')
 
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=14)
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=14)
 
-    pdf.cell(200, 10, txt="Cardiac X-ray Report", ln=True)
-    pdf.cell(200, 10, txt=f"Prediction: {prediction}", ln=True)
-    pdf.cell(200, 10, txt=f"Confidence: {confidence}%", ln=True)
+        pdf.cell(200, 10, txt="Cardiac X-ray Report", ln=True)
+        pdf.cell(200, 10, txt=f"Prediction: {prediction}", ln=True)
+        pdf.cell(200, 10, txt=f"Confidence: {confidence}%", ln=True)
 
-    pdf_output = pdf.output(dest='S').encode('latin-1')
-    buffer = io.BytesIO(pdf_output)
+        pdf_data = pdf.output(dest='S').encode('latin-1')
+        buffer = io.BytesIO(pdf_data)
 
-    return send_file(buffer, as_attachment=True, download_name="report.pdf")
-    prediction = request.form['prediction']
-    confidence = request.form['confidence']
+        return send_file(buffer, as_attachment=True, download_name="report.pdf")
 
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=14)
-
-    pdf.cell(200, 10, txt="Cardiac X-ray Report", ln=True)
-    pdf.cell(200, 10, txt=f"Prediction: {prediction}", ln=True)
-    pdf.cell(200, 10, txt=f"Confidence: {confidence}%", ln=True)
-
-    buffer = io.BytesIO()
-    pdf.output(buffer)
-    buffer.seek(0)
-
-    return send_file(buffer, as_attachment=True, download_name="report.pdf")
-
+    except Exception as e:
+        return f"Error: {str(e)}"
 # ✅ Run
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5050)
