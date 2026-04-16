@@ -1,17 +1,19 @@
-from flask import Flask, request
+from flask import Flask, request, send_from_directory
 from flask_cors import CORS
 import numpy as np
 import cv2
 import os
 import random
-from fpdf import FPDF
-from flask import send_file
-import io
 
 app = Flask(__name__)
 CORS(app)
 
-# ✅ HOME PAGE (UPLOAD UI)
+# ✅ Serve uploaded images
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory('uploads', filename)
+
+# ✅ Home Page
 @app.route("/")
 def home():
     return '''
@@ -35,14 +37,6 @@ def home():
                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
             }
 
-            h2 {
-                color: #333;
-            }
-
-            input[type="file"] {
-                margin: 20px 0;
-            }
-
             button {
                 background: #4facfe;
                 color: white;
@@ -50,11 +44,6 @@ def home():
                 padding: 10px 20px;
                 border-radius: 5px;
                 cursor: pointer;
-                font-size: 16px;
-            }
-
-            button:hover {
-                background: #00c6ff;
             }
         </style>
     </head>
@@ -65,23 +54,15 @@ def home():
 
             <form action="/predict" method="post" enctype="multipart/form-data">
                 <input type="file" name="file" required>
-                <br>
+                <br><br>
                 <button type="submit">Upload & Predict</button>
             </form>
         </div>
     </body>
     </html>
     '''
-    return '''
-    <h2>Cardiac X-ray Detection</h2>
-    <form action="/predict" method="post" enctype="multipart/form-data">
-        <input type="file" name="file" required>
-        <br><br>
-        <button type="submit">Upload & Predict</button>
-    </form>
-    '''
 
-# ✅ PREDICT ROUTE
+# ✅ Predict Route
 @app.route('/predict', methods=['GET', 'POST'])
 def predict():
     if request.method == 'GET':
@@ -89,8 +70,9 @@ def predict():
 
     file = request.files['file']
 
-    filepath = os.path.join("uploads", file.filename)
+    # Save file
     os.makedirs("uploads", exist_ok=True)
+    filepath = os.path.join("uploads", file.filename)
     file.save(filepath)
 
     # Image processing
@@ -99,7 +81,7 @@ def predict():
     img = img / 255.0
     img = np.reshape(img, (1, 224, 224, 3))
 
-    # Dummy prediction (no model)
+    # Dummy prediction
     prediction = random.random()
 
     if prediction > 0.5:
@@ -114,73 +96,51 @@ def predict():
         confidence = round((1 - prediction) * 100, 2)
         doctors = []
 
-    # ✅ SHOW RESULT AS PAGE (NOT JSON)
+    # ✅ Result Page with Image
     return f"""
-    <h3>Uploaded Image:</h3>
-<img src="/uploads/{file.filename}" width="200">
-<html>
-<head>
-<style>
-body {{
-    font-family: Arial;
-    background: linear-gradient(to right, #43e97b, #38f9d7);
-    text-align: center;
-    padding-top: 50px;
-}}
+    <html>
+    <head>
+    <style>
+    body {{
+        font-family: Arial;
+        background: linear-gradient(to right, #43e97b, #38f9d7);
+        text-align: center;
+        padding-top: 50px;
+    }}
 
-.box {{
-    background: white;
-    padding: 30px;
-    border-radius: 10px;
-    width: 400px;
-    margin: auto;
-    box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
-}}
-</style>
-</head>
+    .box {{
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        width: 400px;
+        margin: auto;
+        box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+    }}
+    </style>
+    </head>
 
-<body>
-<div class="box">
-    <h2>Result</h2>
-    <p><b>Prediction:</b> {result}</p>
-    <p><b>Confidence:</b> {confidence}%</p>
+    <body>
+    <div class="box">
+        <h2>Result</h2>
 
-    <h3>Doctors:</h3>
-    <ul>
-    {''.join([f"<li>{d['name']} - {d['hospital']} ({d['phone']})</li>" for d in doctors])}
-    </ul>
+        <h3>Uploaded Image:</h3>
+        <img src="/uploads/{file.filename}" width="200">
 
-    <br>
-    <a href="/">Go Back</a>
-</div>
-</body>
-</html>
-"""
+        <p><b>Prediction:</b> {result}</p>
+        <p><b>Confidence:</b> {confidence}%</p>
 
-# ✅ DOWNLOAD REPORT
-@app.route('/download-report', methods=['POST'])
-def download_report():
-    data = request.json
+        <h3>Doctors:</h3>
+        <ul>
+        {''.join([f"<li>{d['name']} - {d['hospital']} ({d['phone']})</li>" for d in doctors])}
+        </ul>
 
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=14)
+        <br><br>
+        <a href="/">Go Back</a>
+    </div>
+    </body>
+    </html>
+    """
 
-    pdf.cell(200, 10, txt="X-ray Report", ln=True)
-    pdf.cell(200, 10, txt=f"Prediction: {data['prediction']}", ln=True)
-    pdf.cell(200, 10, txt=f"Confidence: {data['confidence']}%", ln=True)
-
-    buffer = io.BytesIO()
-    pdf.output(buffer)
-    buffer.seek(0)
-
-    return send_file(buffer, as_attachment=True, download_name="report.pdf")
-
-# ✅ RUN APP
+# ✅ Run App
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5050)
-    from flask import send_from_directory
-
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory('uploads', filename)
