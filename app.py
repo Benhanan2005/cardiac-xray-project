@@ -1,17 +1,23 @@
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, send_from_directory, send_file
 from flask_cors import CORS
 import numpy as np
 import cv2
 import os
 import random
+from fpdf import FPDF
+import io
 
 app = Flask(__name__)
 CORS(app)
 
+# 📁 Upload folder
+UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 # ✅ Serve uploaded images
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
-    return send_from_directory(os.path.join(os.getcwd(), "uploads"), filename)
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 # ✅ Home Page
 @app.route("/")
@@ -27,7 +33,6 @@ def home():
                 text-align: center;
                 padding-top: 100px;
             }
-
             .container {
                 background: white;
                 padding: 30px;
@@ -36,7 +41,6 @@ def home():
                 margin: auto;
                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
             }
-
             button {
                 background: #4facfe;
                 color: white;
@@ -51,7 +55,6 @@ def home():
     <body>
         <div class="container">
             <h2>Cardiac X-ray Detection</h2>
-
             <form action="/predict" method="post" enctype="multipart/form-data">
                 <input type="file" name="file" required>
                 <br><br>
@@ -71,12 +74,7 @@ def predict():
     file = request.files['file']
 
     # Save file
-    os.makedirs("uploads", exist_ok=True)
-    UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
     filepath = os.path.join(UPLOAD_FOLDER, file.filename)
-    file.save(filepath)
     file.save(filepath)
 
     # Image processing
@@ -100,7 +98,12 @@ def predict():
         confidence = round((1 - prediction) * 100, 2)
         doctors = []
 
-    # ✅ Result Page with Image
+    # Doctor HTML
+    doctor_html = "".join(
+        [f"<li>{d['name']} - {d['hospital']} ({d['phone']})</li>" for d in doctors]
+    )
+
+    # Result Page
     return f"""
     <html>
     <head>
@@ -111,7 +114,6 @@ def predict():
         text-align: center;
         padding-top: 50px;
     }}
-
     .box {{
         background: white;
         padding: 30px;
@@ -119,6 +121,14 @@ def predict():
         width: 400px;
         margin: auto;
         box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+    }}
+    button {{
+        background: #43e97b;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
     }}
     </style>
     </head>
@@ -128,15 +138,21 @@ def predict():
         <h2>Result</h2>
 
         <h3>Uploaded Image:</h3>
-        <img src="/uploads/{file.filename}" width="200" style="border:2px solid black;">
+        <img src="/uploads/{file.filename}" width="200">
 
         <p><b>Prediction:</b> {result}</p>
         <p><b>Confidence:</b> {confidence}%</p>
 
         <h3>Doctors:</h3>
-        <ul>
-        {''.join([f"<li>{d['name']} - {d['hospital']} ({d['phone']})</li>" for d in doctors])}
-        </ul>
+        <ul>{doctor_html}</ul>
+
+        <br>
+
+        <form action="/download-report" method="post">
+            <input type="hidden" name="prediction" value="{result}">
+            <input type="hidden" name="confidence" value="{confidence}">
+            <button type="submit">Download Report 📄</button>
+        </form>
 
         <br><br>
         <a href="/">Go Back</a>
@@ -145,6 +161,26 @@ def predict():
     </html>
     """
 
-# ✅ Run App
+# ✅ PDF Download
+@app.route('/download-report', methods=['POST'])
+def download_report():
+    prediction = request.form['prediction']
+    confidence = request.form['confidence']
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=14)
+
+    pdf.cell(200, 10, txt="Cardiac X-ray Report", ln=True)
+    pdf.cell(200, 10, txt=f"Prediction: {prediction}", ln=True)
+    pdf.cell(200, 10, txt=f"Confidence: {confidence}%", ln=True)
+
+    buffer = io.BytesIO()
+    pdf.output(buffer)
+    buffer.seek(0)
+
+    return send_file(buffer, as_attachment=True, download_name="report.pdf")
+
+# ✅ Run
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5050)
