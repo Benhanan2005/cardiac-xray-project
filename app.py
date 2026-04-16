@@ -11,7 +11,7 @@ CORS(app)
 # ✅ Serve uploaded images
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
-    return send_from_directory('uploads', filename)
+    return send_from_directory(os.path.join(os.getcwd(), "uploads"), filename)
 
 # ✅ Home Page
 @app.route("/")
@@ -72,7 +72,11 @@ def predict():
 
     # Save file
     os.makedirs("uploads", exist_ok=True)
-    filepath = os.path.join("uploads", file.filename)
+    UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+    filepath = os.path.join(UPLOAD_FOLDER, file.filename)
+    file.save(filepath)
     file.save(filepath)
 
     # Image processing
@@ -124,7 +128,7 @@ def predict():
         <h2>Result</h2>
 
         <h3>Uploaded Image:</h3>
-        <img src="/uploads/{file.filename}" width="200">
+        <img src="/uploads/{file.filename}" width="200" style="border:2px solid black;">
 
         <p><b>Prediction:</b> {result}</p>
         <p><b>Confidence:</b> {confidence}%</p>
