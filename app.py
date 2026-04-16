@@ -175,6 +175,21 @@ def download_report():
     pdf.cell(200, 10, txt=f"Prediction: {prediction}", ln=True)
     pdf.cell(200, 10, txt=f"Confidence: {confidence}%", ln=True)
 
+    pdf_output = pdf.output(dest='S').encode('latin-1')
+    buffer = io.BytesIO(pdf_output)
+
+    return send_file(buffer, as_attachment=True, download_name="report.pdf")
+    prediction = request.form['prediction']
+    confidence = request.form['confidence']
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=14)
+
+    pdf.cell(200, 10, txt="Cardiac X-ray Report", ln=True)
+    pdf.cell(200, 10, txt=f"Prediction: {prediction}", ln=True)
+    pdf.cell(200, 10, txt=f"Confidence: {confidence}%", ln=True)
+
     buffer = io.BytesIO()
     pdf.output(buffer)
     buffer.seek(0)
